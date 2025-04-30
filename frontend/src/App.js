@@ -8,12 +8,14 @@ const API = `${BACKEND_URL}/api`;
 function App() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState(5);
+  const [age, setAge] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [currentStory, setCurrentStory] = useState(null);
   const [previousStories, setPreviousStories] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef(null);
 
   // Fetch previous stories on component mount
