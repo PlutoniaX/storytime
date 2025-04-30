@@ -107,7 +107,7 @@ class BedtimeStoryAPITester:
             "POST",
             "text-to-speech",
             200,
-            data=story_id  # Send the story_id as a string, not as a JSON object
+            data={"story_id": story_id}  # Send the story_id as a JSON object with a "story_id" field
         )
         return success
 
