@@ -5,9 +5,9 @@
 
 🔍 Testing Generate Story...
 ✅ Passed - Status: 200
-Generated story with ID: 0204c611-1fbc-4611-a109-3c560064a80c
-Story title: Title: "Drako The Dragon Learns To Share"
-Image URL: https://oaidalleapiprodscus.blob.core.windows.net/private/org-KTOmWvqYgEbMDQFDij2JKsc6/user-mj8V2WYEQdMLH1jGJowALY58/img-W1EZJvw4RdEbH0wbqfx7SdZ6.png?st=2025-04-30T00%3A33%3A48Z&se=2025-04-30T02%3A33%3A48Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=cc612491-d948-4d2e-9821-2683df3719f5&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-04-29T23%3A06%3A03Z&ske=2025-04-30T23%3A06%3A03Z&sks=b&skv=2024-08-04&sig=uio61Gv1VvrkZTTGEZHvPq/sdvwZ629ohJWyWG3iPDQ%3D
+Generated story with ID: 14c15843-d57b-4139-9a8d-3f216a60cd1f
+Story title: ## Sparky's Sparkling Surprise
+Image URL: https://source.unsplash.com/random/1024x1024/?children,story,a,friendly,dragon,who,learns,to,share
 
 🧪 Testing Age-Appropriate Content Generation 🧪
 
@@ -15,61 +15,57 @@ Image URL: https://oaidalleapiprodscus.blob.core.windows.net/private/org-KTOmWvq
 
 🔍 Testing Generate Story for Age 3...
 ✅ Passed - Status: 200
-Generated age-appropriate story: Title: "Teddy's Big Adventure"
+Generated age-appropriate story: Title: Teddy's Big Adventure!
 
 🧒 Testing story generation for age: 5
 
 🔍 Testing Generate Story for Age 5...
 ✅ Passed - Status: 200
-Generated age-appropriate story: Title: "The Adventure in Whispering Woods"
+Generated age-appropriate story: ## Barnaby Bear's Magical Forest Adventure
 
 🧒 Testing story generation for age: 8
 
 🔍 Testing Generate Story for Age 8...
-❌ Failed - Expected 200, got 502
-Response: 
+✅ Passed - Status: 200
+Generated age-appropriate story: ## The Starry Stowaway
 
 🧒 Testing story generation for age: 11
 
 🔍 Testing Generate Story for Age 11...
-❌ Failed - Expected 200, got 502
-Response: 
-❌ Age-appropriate story generation tests failed
+✅ Passed - Status: 200
+Generated age-appropriate story: ## The Chronarium's Curious Case
+✅ Successfully generated stories for different age groups
 
 🧪 Testing Multi-Language Support 🧪
 
 🌐 Testing story generation in English
 
 🔍 Testing Generate Story in English...
-❌ Failed - Expected 200, got 502
-Response: 
+✅ Passed - Status: 200
+Generated story in English: ## Clementine's Courageous Flight
 
 🌐 Testing story generation in Spanish
 
 🔍 Testing Generate Story in Spanish...
-❌ Failed - Expected 200, got 502
-Response: 
+✅ Passed - Status: 200
+Generated story in Spanish: ## El Gato que Quería Volar
 
 🌐 Testing story generation in French
 
 🔍 Testing Generate Story in French...
-❌ Failed - Expected 200, got 502
-Response: 
-❌ Multi-language story generation tests failed
+✅ Passed - Status: 200
+Generated story in French: ## Minou le Chat Volant
+✅ Successfully generated stories in different languages
 
 🔍 Testing Get All Stories...
-❌ Failed - Expected 200, got 502
-Response: 
-❌ Get stories failed
+✅ Passed - Status: 200
+Retrieved 20 stories
 
 🔍 Testing Get Specific Story...
-❌ Failed - Expected 200, got 502
-Response: 
-❌ Get specific story failed
+✅ Passed - Status: 200
+Retrieved story: ## Sparky's Sparkling Surprise
 
 🔍 Testing Text-to-Speech Generation...
-❌ Failed - Expected 200, got 502
-Response: 
-❌ Text-to-speech generation failed
+✅ Passed - Status: 200
 
-📊 Tests passed: 4/12
+📊 Tests passed: 12/12
