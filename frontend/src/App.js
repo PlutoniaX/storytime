@@ -47,23 +47,46 @@ function App() {
     try {
       setError(null);
       setGenerating(true);
+      setProgress(0);
+      
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          // Simulate progress up to 90% (the actual completion will push it to 100%)
+          if (prev < 90) {
+            return prev + Math.random() * 5;
+          }
+          return prev;
+        });
+      }, 500);
       
       // Generate the story
       const response = await axios.post(`${API}/generate-story`, {
         prompt: prompt.trim(),
+        age: parseInt(age),
         duration: parseInt(duration)
       });
+      
+      // Set progress to 100% when done
+      clearInterval(progressInterval);
+      setProgress(100);
       
       setCurrentStory(response.data);
       
       // Refresh the story list
       fetchStories();
       
-      setGenerating(false);
+      // Small delay to show completed progress bar before resetting
+      setTimeout(() => {
+        setGenerating(false);
+        setProgress(0);
+      }, 500);
+      
     } catch (err) {
       console.error("Error generating story:", err);
       setError("Failed to generate story. Please try again.");
       setGenerating(false);
+      setProgress(0);
     }
   };
 
