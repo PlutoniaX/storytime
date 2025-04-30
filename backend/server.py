@@ -286,7 +286,10 @@ async def text_to_speech(story_id: dict = Body(...)):
         if language_detection.status_code != 200:
             voice = "nova"  # Default to Nova if detection fails
         else:
-            language = language_detection.json()["choices"][0]["message"]["content"].strip().lower()
+            try:
+                language = language_detection.json()["candidates"][0]["content"]["parts"][0]["text"].strip().lower()
+            except (KeyError, IndexError):
+                language = "english"  # Default to English if parsing fails
             
             # Map languages to appropriate voices
             # OpenAI TTS voices: alloy, echo, fable, onyx, nova, shimmer
