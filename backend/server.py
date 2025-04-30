@@ -45,6 +45,7 @@ class Story(BaseModel):
 class StoryRequest(BaseModel):
     prompt: str
     duration: int  # in minutes
+    age: Optional[int] = 5  # default age if not provided
 
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
