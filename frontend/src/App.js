@@ -89,6 +89,9 @@ function App() {
       console.error("Error playing audio:", err);
       setError("Failed to play the story. Please try again.");
       setIsPlaying(false);
+    } finally {
+      // Set isPlaying to false when audio ends or if there's an error
+      audioRef.current.onended = () => setIsPlaying(false);
     }
   };
 
