@@ -256,21 +256,29 @@ async def text_to_speech(story_id: dict = Body(...)):
         
         story = Story(**story_doc)
         
-        # Detect language of the story
+        # Detect language of the story using Gemini
         language_detection = requests.post(
-            "https://api.openai.com/v1/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
             headers={
-                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
+            params={
+                "key": gemini_api_key
+            },
             json={
-                "model": "gpt-4",
-                "messages": [
-                    {"role": "system", "content": "Identify the language of the following text. Respond with ONLY the language name in English. For example: 'English', 'Spanish', 'French', etc."},
-                    {"role": "user", "content": story.content[:200]}  # First 200 chars should be enough
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": "Identify the language of the following text. Respond with ONLY the language name in English. For example: 'English', 'Spanish', 'French', etc.\n\nText: " + story.content[:200]  # First 200 chars should be enough
+                            }
+                        ]
+                    }
                 ],
-                "max_tokens": 50,
-                "temperature": 0.3,
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 50
+                }
             }
         )
         
