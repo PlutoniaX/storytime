@@ -213,14 +213,16 @@ function App() {
                 <input
                   type="range"
                   id="age"
-                  min="2"
+                  min="0"
                   max="12"
                   step="1"
                   value={age}
                   onChange={(e) => setAge(parseInt(e.target.value))}
                   className="slider"
                 />
-                <span className="age-value">{age} years old</span>
+                <span className="age-value">
+                  {age === 0 ? "Under 1 year" : `${age} years old`}
+                </span>
               </div>
             </div>
 
