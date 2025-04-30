@@ -9,12 +9,20 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
 from datetime import datetime
-import openai
 import json
 import base64
 import requests
 from fastapi.responses import StreamingResponse
 import io
+import sys
+import subprocess
+
+# Install OpenAI if not already installed
+try:
+    import openai
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "openai"])
+    import openai
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
