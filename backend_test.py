@@ -50,14 +50,14 @@ class BedtimeStoryAPITester:
         )
         return success
 
-    def test_generate_story(self, prompt="a friendly dragon who learns to share", duration=5):
-        """Test story generation"""
+    def test_generate_story(self, prompt="a friendly dragon who learns to share", duration=5, age=5):
+        """Test story generation with age parameter"""
         success, response = self.run_test(
             "Generate Story",
             "POST",
             "generate-story",
             200,
-            data={"prompt": prompt, "duration": duration}
+            data={"prompt": prompt, "duration": duration, "age": age}
         )
         
         if success and response:
@@ -69,6 +69,62 @@ class BedtimeStoryAPITester:
             print(f"Image URL: {response.get('image_url', 'None')}")
             return True
         return False
+
+    def test_generate_story_different_ages(self):
+        """Test story generation for different age groups"""
+        age_groups = [3, 5, 8, 11]  # Representative of age ranges 2-3, 4-6, 7-9, 10-12
+        prompts = ["a teddy bear's adventure", "a magical forest", "space explorers", "a time travel mystery"]
+        
+        results = []
+        for i, age in enumerate(age_groups):
+            print(f"\n🧒 Testing story generation for age: {age}")
+            success, response = self.run_test(
+                f"Generate Story for Age {age}",
+                "POST",
+                "generate-story",
+                200,
+                data={"prompt": prompts[i], "duration": 5, "age": age}
+            )
+            
+            if success and response:
+                content = response.get('content', '')
+                title = content.split('\n')[0] if content else 'No title'
+                print(f"Generated age-appropriate story: {title}")
+                results.append(True)
+            else:
+                results.append(False)
+        
+        return all(results)
+
+    def test_generate_story_different_languages(self):
+        """Test story generation with prompts in different languages"""
+        language_prompts = [
+            "a cat who learns to fly",  # English
+            "un gato que aprende a volar",  # Spanish
+            "un chat qui apprend à voler"   # French
+        ]
+        
+        results = []
+        for i, prompt in enumerate(language_prompts):
+            language = ["English", "Spanish", "French"][i]
+            print(f"\n🌐 Testing story generation in {language}")
+            success, response = self.run_test(
+                f"Generate Story in {language}",
+                "POST",
+                "generate-story",
+                200,
+                data={"prompt": prompt, "duration": 5, "age": 5}
+            )
+            
+            if success and response:
+                content = response.get('content', '')
+                title = content.split('\n')[0] if content else 'No title'
+                print(f"Generated story in {language}: {title}")
+                results.append(True)
+            else:
+                results.append(False)
+        
+        return all(results)
 
     def test_get_stories(self):
         """Test retrieving all stories"""
@@ -123,10 +179,24 @@ def main():
         print("❌ Root endpoint test failed, stopping tests")
         return 1
     
-    # Test story generation
+    # Test story generation with default parameters
     if not tester.test_generate_story():
         print("❌ Story generation failed, stopping tests")
         return 1
+    
+    # Test story generation for different age groups
+    print("\n🧪 Testing Age-Appropriate Content Generation 🧪")
+    if not tester.test_generate_story_different_ages():
+        print("❌ Age-appropriate story generation tests failed")
+    else:
+        print("✅ Successfully generated stories for different age groups")
+    
+    # Test story generation with different languages
+    print("\n🧪 Testing Multi-Language Support 🧪")
+    if not tester.test_generate_story_different_languages():
+        print("❌ Multi-language story generation tests failed")
+    else:
+        print("✅ Successfully generated stories in different languages")
     
     # Test get all stories
     if not tester.test_get_stories():
