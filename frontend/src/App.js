@@ -192,6 +192,7 @@ function App() {
           </div>
         </div>
       ) : (
+        <>
         <main className="main-content" ref={storyContentRef}>
         <section className="story-generator">
           <form onSubmit={generateStory} className="story-form">
@@ -348,7 +349,7 @@ function App() {
         <footer className="footer">
           <p>© 2025 Bedtime Story Generator - Made with love for sleepy children everywhere</p>
         </footer>
-      </>
+        </>
       )}
     </div>
   );
