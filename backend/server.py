@@ -75,28 +75,39 @@ async def generate_story(request: StoryRequest):
             max_tokens = 2500
             complexity = "complex"
             
-        # First detect the language of the prompt
+        # First detect the language of the prompt using Gemini
         language_detection = requests.post(
-            "https://api.openai.com/v1/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
             headers={
-                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
+            params={
+                "key": gemini_api_key
+            },
             json={
-                "model": "gpt-4",
-                "messages": [
-                    {"role": "system", "content": "Identify the language of the following text. Respond with ONLY the language name in English. For example: 'English', 'Spanish', 'French', etc."},
-                    {"role": "user", "content": request.prompt}
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": "Identify the language of the following text. Respond with ONLY the language name in English. For example: 'English', 'Spanish', 'French', etc.\n\nText: " + request.prompt
+                            }
+                        ]
+                    }
                 ],
-                "max_tokens": 50,
-                "temperature": 0.3,
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 50
+                }
             }
         )
         
         if language_detection.status_code != 200:
             language = "English"  # Default to English if detection fails
         else:
-            language = language_detection.json()["choices"][0]["message"]["content"].strip()
+            try:
+                language = language_detection.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+            except (KeyError, IndexError):
+                language = "English"  # Default to English if parsing fails
             
         # Create age-appropriate instruction
         age_guidance = ""
