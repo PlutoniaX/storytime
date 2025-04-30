@@ -99,8 +99,10 @@ async def generate_story(request: StoryRequest):
             
         # Create age-appropriate instruction
         age_guidance = ""
-        if request.age <= 3:
-            age_guidance = "very young children (2-3 years old). Use simple words, short sentences, and repetitive elements. Focus on basic concepts and familiar objects."
+        if request.age == 0:
+            age_guidance = "infants under 1 year old. Use extremely simple words, very short sentences, and lots of repetition. Focus on colors, shapes, sounds, and familiar objects. Keep it very short with rhythmic patterns."
+        elif request.age <= 3:
+            age_guidance = "very young children (1-3 years old). Use simple words, short sentences, and repetitive elements. Focus on basic concepts and familiar objects."
         elif request.age <= 6:
             age_guidance = "preschool children (4-6 years old). Use simple language with some new vocabulary. Include simple moral lessons and gentle adventure."
         elif request.age <= 9:
