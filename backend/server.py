@@ -73,8 +73,44 @@ async def generate_story(request: StoryRequest):
         else:
             max_tokens = 1500
             complexity = "complex"
+            
+        # First detect the language of the prompt
+        language_detection = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": "Identify the language of the following text. Respond with ONLY the language name in English. For example: 'English', 'Spanish', 'French', etc."},
+                    {"role": "user", "content": request.prompt}
+                ],
+                "max_tokens": 50,
+                "temperature": 0.3,
+            }
+        )
+        
+        if language_detection.status_code != 200:
+            language = "English"  # Default to English if detection fails
+        else:
+            language = language_detection.json()["choices"][0]["message"]["content"].strip()
+            
+        # Create age-appropriate instruction
+        age_guidance = ""
+        if request.age <= 3:
+            age_guidance = "very young children (2-3 years old). Use simple words, short sentences, and repetitive elements. Focus on basic concepts and familiar objects."
+        elif request.age <= 6:
+            age_guidance = "preschool children (4-6 years old). Use simple language with some new vocabulary. Include simple moral lessons and gentle adventure."
+        elif request.age <= 9:
+            age_guidance = "elementary school children (7-9 years old). Use moderate vocabulary with some challenge words. Include more complex storylines with clear moral lessons."
+        else:
+            age_guidance = "older children (10-12 years old). Use rich vocabulary and more complex sentence structures. Include more sophisticated themes while maintaining age-appropriate content."
 
         # Generate story content using OpenAI API (direct HTTP request)
+        system_prompt = f"You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for {age_guidance} Make it engaging, descriptive, and with a positive message. Include a title at the beginning. The story should be written in {language}."
+        
         story_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -84,7 +120,7 @@ async def generate_story(request: StoryRequest):
             json={
                 "model": "gpt-4",
                 "messages": [
-                    {"role": "system", "content": f"You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for young children. Make it engaging, descriptive, and with a positive message. Include a title at the beginning."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Create a bedtime story about: {request.prompt}"}
                 ],
                 "max_tokens": max_tokens,
@@ -98,7 +134,7 @@ async def generate_story(request: StoryRequest):
         story_content = story_response.json()["choices"][0]["message"]["content"].strip()
         
         # Generate an image for the story using DALL-E API (direct HTTP request)
-        image_prompt = f"A children's book illustration for a story about {request.prompt}. Cute, colorful, child-friendly style."
+        image_prompt = f"A children's book illustration for a story about {request.prompt}, suitable for a {request.age} year old child. Cute, colorful, child-friendly style with 3D pop effect."
         image_response = requests.post(
             "https://api.openai.com/v1/images/generations",
             headers={
