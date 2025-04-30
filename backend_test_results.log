@@ -20,3 +20,56 @@ Generated age-appropriate story: Title: "Teddy's Big Adventure"
 🧒 Testing story generation for age: 5
 
 🔍 Testing Generate Story for Age 5...
+✅ Passed - Status: 200
+Generated age-appropriate story: Title: "The Adventure in Whispering Woods"
+
+🧒 Testing story generation for age: 8
+
+🔍 Testing Generate Story for Age 8...
+❌ Failed - Expected 200, got 502
+Response: 
+
+🧒 Testing story generation for age: 11
+
+🔍 Testing Generate Story for Age 11...
+❌ Failed - Expected 200, got 502
+Response: 
+❌ Age-appropriate story generation tests failed
+
+🧪 Testing Multi-Language Support 🧪
+
+🌐 Testing story generation in English
+
+🔍 Testing Generate Story in English...
+❌ Failed - Expected 200, got 502
+Response: 
+
+🌐 Testing story generation in Spanish
+
+🔍 Testing Generate Story in Spanish...
+❌ Failed - Expected 200, got 502
+Response: 
+
+🌐 Testing story generation in French
+
+🔍 Testing Generate Story in French...
+❌ Failed - Expected 200, got 502
+Response: 
+❌ Multi-language story generation tests failed
+
+🔍 Testing Get All Stories...
+❌ Failed - Expected 200, got 502
+Response: 
+❌ Get stories failed
+
+🔍 Testing Get Specific Story...
+❌ Failed - Expected 200, got 502
+Response: 
+❌ Get specific story failed
+
+🔍 Testing Text-to-Speech Generation...
+❌ Failed - Expected 200, got 502
+Response: 
+❌ Text-to-speech generation failed
+
+📊 Tests passed: 4/12
