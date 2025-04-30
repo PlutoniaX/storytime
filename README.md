@@ -49,7 +49,8 @@ A magical app that creates personalized bedtime stories for children with just a
 
 The app requires the following environment variables:
 
-- `OPENAI_API_KEY`: For GPT-4, DALL-E, and TTS functionality
+- `GEMINI_API_KEY`: For Google Gemini story and image generation
+- `OPENAI_API_KEY`: For text-to-speech functionality
 - `MONGO_URL`: MongoDB connection string
 - `DB_NAME`: Database name
 
@@ -68,6 +69,84 @@ cd frontend
 yarn install
 yarn start
 ```
+
+## Deployment Instructions
+
+### Local Deployment
+
+1. **Prerequisites**:
+   - Node.js 16+ and npm/yarn
+   - Python 3.8+
+   - MongoDB
+
+2. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd bedtime-story-generator
+   ```
+
+3. **Backend Setup**:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+4. **Create a .env file in the backend directory**:
+   ```
+   MONGO_URL="mongodb://localhost:27017"
+   DB_NAME="bedtime_stories"
+   GEMINI_API_KEY="your_gemini_api_key"
+   OPENAI_API_KEY="your_openai_api_key"
+   ```
+
+5. **Frontend Setup**:
+   ```bash
+   cd frontend
+   yarn install
+   ```
+
+6. **Create a .env file in the frontend directory**:
+   ```
+   REACT_APP_BACKEND_URL="http://localhost:8001"
+   ```
+
+7. **Start the Development Servers**:
+   ```bash
+   # In backend directory
+   uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+
+   # In frontend directory (another terminal)
+   yarn start
+   ```
+
+### Cloud Deployment
+
+#### Deploy on Vercel or Netlify (Frontend)
+
+1. Create a new project on Vercel or Netlify
+2. Link to your GitHub repository
+3. Set the build command to `cd frontend && yarn install && yarn build`
+4. Set the publish directory to `frontend/build`
+5. Add environment variables (REACT_APP_BACKEND_URL pointing to your backend)
+
+#### Deploy Backend on Render or Railway
+
+1. Create a new web service on Render or Railway
+2. Link to your GitHub repository
+3. Set the build command to `cd backend && pip install -r requirements.txt`
+4. Set the start command to `cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT`
+5. Add all required environment variables
+6. Deploy!
+
+#### Database Setup (MongoDB Atlas)
+
+1. Create a free MongoDB Atlas account
+2. Create a new cluster
+3. Set up database access (username/password)
+4. Get your connection string
+5. Add it to your backend environment variables
 
 ## Future Enhancements
 
