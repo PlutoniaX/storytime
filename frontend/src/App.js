@@ -124,6 +124,23 @@ function App() {
             </div>
 
             <div className="form-group">
+              <label htmlFor="age">Child's Age:</label>
+              <div className="age-slider">
+                <input
+                  type="range"
+                  id="age"
+                  min="2"
+                  max="12"
+                  step="1"
+                  value={age}
+                  onChange={(e) => setAge(parseInt(e.target.value))}
+                  className="slider"
+                />
+                <span className="age-value">{age} years old</span>
+              </div>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="duration">Story Duration (minutes):</label>
               <div className="duration-slider">
                 <input
@@ -133,7 +150,7 @@ function App() {
                   max="15"
                   step="1"
                   value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
+                  onChange={(e) => setDuration(parseInt(e.target.value))}
                   className="slider"
                 />
                 <span className="duration-value">{duration} minutes</span>
@@ -145,7 +162,19 @@ function App() {
               className="generate-btn"
               disabled={generating}
             >
-              {generating ? "Generating Story..." : "Generate Bedtime Story"}
+              {generating ? 
+                <div className="generating-container">
+                  <span>Generating Story...</span>
+                  <div className="progress-container">
+                    <div 
+                      className="progress-bar" 
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+                : 
+                "Generate Bedtime Story"
+              }
             </button>
           </form>
 
