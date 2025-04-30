@@ -188,6 +188,48 @@ async def text_to_speech(story_id: dict = Body(...)):
         
         story = Story(**story_doc)
         
+        # Detect language of the story
+        language_detection = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": "Identify the language of the following text. Respond with ONLY the language name in English. For example: 'English', 'Spanish', 'French', etc."},
+                    {"role": "user", "content": story.content[:200]}  # First 200 chars should be enough
+                ],
+                "max_tokens": 50,
+                "temperature": 0.3,
+            }
+        )
+        
+        # Select appropriate voice based on language
+        if language_detection.status_code != 200:
+            voice = "nova"  # Default to Nova if detection fails
+        else:
+            language = language_detection.json()["choices"][0]["message"]["content"].strip().lower()
+            
+            # Map languages to appropriate voices
+            # OpenAI TTS voices: alloy, echo, fable, onyx, nova, shimmer
+            voice_map = {
+                "english": "nova",
+                "spanish": "alloy",
+                "french": "alloy",
+                "german": "alloy",
+                "italian": "alloy",
+                "portuguese": "alloy",
+                "japanese": "alloy",
+                "chinese": "alloy",
+                "arabic": "alloy",
+                "hindi": "alloy",
+                "russian": "alloy"
+            }
+            
+            voice = voice_map.get(language, "alloy")  # Default to alloy for other languages
+        
         # Generate speech using OpenAI API (direct HTTP request)
         speech_response = requests.post(
             "https://api.openai.com/v1/audio/speech",
@@ -197,7 +239,7 @@ async def text_to_speech(story_id: dict = Body(...)):
             },
             json={
                 "model": "tts-1",
-                "voice": "nova",
+                "voice": voice,
                 "input": story.content
             },
             stream=True
