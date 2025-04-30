@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Body
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,15 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 import uuid
 from datetime import datetime
-
+import openai
+import json
+import base64
+import requests
+from fastapi.responses import StreamingResponse
+import io
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,14 +24,29 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# OpenAI API setup
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+
 # Create the main app without a prefix
 app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-
 # Define Models
+class Story(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    prompt: str
+    duration: int  # in minutes
+    content: str
+    image_url: Optional[str] = None
+    audio_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class StoryRequest(BaseModel):
+    prompt: str
+    duration: int  # in minutes
+
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
@@ -35,11 +55,122 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Add your routes to the router instead of directly to app
+# API Routes
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
 
+@api_router.post("/generate-story", response_model=Story)
+async def generate_story(request: StoryRequest):
+    try:
+        # Determine story length based on duration
+        if request.duration <= 5:
+            max_tokens = 500
+            complexity = "simple"
+        elif request.duration <= 10:
+            max_tokens = 1000
+            complexity = "moderate"
+        else:
+            max_tokens = 1500
+            complexity = "complex"
+
+        # Generate story content using OpenAI
+        story_response = openai.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": f"You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for young children. Make it engaging, descriptive, and with a positive message. Include a title at the beginning."},
+                {"role": "user", "content": f"Create a bedtime story about: {request.prompt}"}
+            ],
+            max_tokens=max_tokens,
+            temperature=0.7,
+        )
+        
+        story_content = story_response.choices[0].message.content.strip()
+        
+        # Generate an image for the story using DALL-E
+        image_prompt = f"A children's book illustration for a story about {request.prompt}. Cute, colorful, child-friendly style."
+        image_response = openai.images.generate(
+            model="dall-e-3",
+            prompt=image_prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        
+        image_url = image_response.data[0].url
+        
+        # Create a story object
+        story = Story(
+            prompt=request.prompt,
+            duration=request.duration,
+            content=story_content,
+            image_url=image_url
+        )
+        
+        # Save to database
+        await db.stories.insert_one(story.dict())
+        
+        return story
+    
+    except Exception as e:
+        logging.error(f"Error generating story: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating story: {str(e)}")
+
+@api_router.post("/text-to-speech")
+async def text_to_speech(story_id: str = Body(...)):
+    try:
+        # Get the story from the database
+        story_doc = await db.stories.find_one({"id": story_id})
+        if not story_doc:
+            raise HTTPException(status_code=404, detail="Story not found")
+        
+        story = Story(**story_doc)
+        
+        # Generate speech using OpenAI API
+        speech_response = openai.audio.speech.create(
+            model="tts-1",
+            voice="nova",
+            input=story.content
+        )
+        
+        # Convert to streaming response
+        audio_stream = io.BytesIO(speech_response.content)
+        audio_stream.seek(0)
+        
+        # Save audio URL to the database (would typically save to cloud storage in production)
+        story.audio_url = f"/api/audio/{story_id}"
+        await db.stories.update_one(
+            {"id": story_id},
+            {"$set": {"audio_url": story.audio_url}}
+        )
+        
+        return StreamingResponse(audio_stream, media_type="audio/mpeg")
+    
+    except Exception as e:
+        logging.error(f"Error generating speech: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating speech: {str(e)}")
+
+@api_router.get("/stories", response_model=List[Story])
+async def get_stories():
+    try:
+        stories = await db.stories.find().sort("created_at", -1).to_list(20)
+        return [Story(**story) for story in stories]
+    except Exception as e:
+        logging.error(f"Error retrieving stories: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving stories: {str(e)}")
+
+@api_router.get("/story/{story_id}", response_model=Story)
+async def get_story(story_id: str):
+    try:
+        story = await db.stories.find_one({"id": story_id})
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+        return Story(**story)
+    except Exception as e:
+        logging.error(f"Error retrieving story: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving story: {str(e)}")
+
+# Status check routes (from template)
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.dict()

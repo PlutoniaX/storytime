@@ -1,52 +1,234 @@
-import { useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+function App() {
+  const [prompt, setPrompt] = useState("");
+  const [duration, setDuration] = useState(5);
+  const [generating, setGenerating] = useState(false);
+  const [currentStory, setCurrentStory] = useState(null);
+  const [previousStories, setPreviousStories] = useState([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const audioRef = useRef(null);
+
+  // Fetch previous stories on component mount
+  useEffect(() => {
+    fetchStories();
+  }, []);
+
+  const fetchStories = async () => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      setLoading(true);
+      const response = await axios.get(`${API}/stories`);
+      setPreviousStories(response.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching stories:", err);
+      setError("Failed to load previous stories. Please try again later.");
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const generateStory = async (e) => {
+    e.preventDefault();
+    
+    if (!prompt.trim()) {
+      setError("Please enter a story prompt");
+      return;
+    }
+    
+    try {
+      setError(null);
+      setGenerating(true);
+      
+      // Generate the story
+      const response = await axios.post(`${API}/generate-story`, {
+        prompt: prompt.trim(),
+        duration: parseInt(duration)
+      });
+      
+      setCurrentStory(response.data);
+      
+      // Refresh the story list
+      fetchStories();
+      
+      setGenerating(false);
+    } catch (err) {
+      console.error("Error generating story:", err);
+      setError("Failed to generate story. Please try again.");
+      setGenerating(false);
+    }
+  };
+
+  const playAudio = async (storyId) => {
+    try {
+      setIsPlaying(true);
+      
+      // Generate the audio if not already done
+      const audioResponse = await axios.post(
+        `${API}/text-to-speech`,
+        { story_id: storyId },
+        { responseType: 'blob' }
+      );
+      
+      // Create a blob URL for the audio
+      const audioBlob = new Blob([audioResponse.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Play the audio
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play();
+      }
+    } catch (err) {
+      console.error("Error playing audio:", err);
+      setError("Failed to play the story. Please try again.");
+      setIsPlaying(false);
+    }
+  };
+
+  const loadStory = (story) => {
+    setCurrentStory(story);
+  };
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
+    <div className="app-container">
+      <header className="header">
+        <h1 className="title">Bedtime Story Generator</h1>
+        <p className="subtitle">Create magical bedtime stories for your child</p>
       </header>
-    </div>
-  );
-};
 
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <main className="main-content">
+        <section className="story-generator">
+          <form onSubmit={generateStory} className="story-form">
+            <div className="form-group">
+              <label htmlFor="prompt">Story Prompt:</label>
+              <textarea
+                id="prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Enter a theme or topic for your bedtime story (e.g., 'a brave little dragon learning to fly')"
+                required
+                className="story-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="duration">Story Duration (minutes):</label>
+              <div className="duration-slider">
+                <input
+                  type="range"
+                  id="duration"
+                  min="3"
+                  max="15"
+                  step="1"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className="slider"
+                />
+                <span className="duration-value">{duration} minutes</span>
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="generate-btn"
+              disabled={generating}
+            >
+              {generating ? "Generating Story..." : "Generate Bedtime Story"}
+            </button>
+          </form>
+
+          {error && <div className="error-message">{error}</div>}
+        </section>
+
+        {currentStory && (
+          <section className="current-story">
+            <div className="story-content">
+              <div className="story-header">
+                <h2>{currentStory.content.split("\n")[0]}</h2>
+                <div className="story-meta">
+                  <span>{new Date(currentStory.created_at).toLocaleDateString()}</span>
+                  <span>{currentStory.duration} minute story</span>
+                </div>
+              </div>
+              
+              {currentStory.image_url && (
+                <div className="story-image">
+                  <img src={currentStory.image_url} alt="Story illustration" />
+                </div>
+              )}
+              
+              <div className="story-text">
+                {currentStory.content.split("\n").slice(1).map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+              
+              <div className="story-controls">
+                <button
+                  className="play-btn"
+                  onClick={() => playAudio(currentStory.id)}
+                  disabled={isPlaying}
+                >
+                  {isPlaying ? "Playing..." : "Read Aloud"}
+                </button>
+                <audio 
+                  ref={audioRef}
+                  onEnded={() => setIsPlaying(false)}
+                  onError={() => {
+                    setError("Failed to play audio. Please try again.");
+                    setIsPlaying(false);
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="previous-stories">
+          <h2 className="section-title">Previous Stories</h2>
+          
+          {loading ? (
+            <p>Loading previous stories...</p>
+          ) : previousStories.length > 0 ? (
+            <div className="story-list">
+              {previousStories.map((story) => (
+                <div 
+                  key={story.id} 
+                  className="story-card"
+                  onClick={() => loadStory(story)}
+                >
+                  <div className="story-card-content">
+                    <h3>{story.content.split("\n")[0]}</h3>
+                    <p className="story-prompt">{story.prompt}</p>
+                    <div className="story-meta">
+                      <span>{new Date(story.created_at).toLocaleDateString()}</span>
+                      <span>{story.duration} min</span>
+                    </div>
+                  </div>
+                  {story.image_url && (
+                    <div className="story-card-image">
+                      <img src={story.image_url} alt="Story thumbnail" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No previous stories yet. Generate your first story!</p>
+          )}
+        </section>
+      </main>
+
+      <footer className="footer">
+        <p>© 2025 Bedtime Story Generator - Made with love for sleepy children everywhere</p>
+      </footer>
     </div>
   );
 }
