@@ -134,6 +134,37 @@ function App() {
     setCurrentStory(story);
   };
 
+  // Login handling function
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password === CORRECT_PASSWORD) {
+      setIsAuthenticated(true);
+      setPasswordError("");
+      // Store in session storage to persist through page refreshes
+      sessionStorage.setItem("bedtimeAuth", "true");
+    } else {
+      setPasswordError("Incorrect password. Please try again.");
+    }
+  };
+
+  // Check for stored authentication on mount
+  useEffect(() => {
+    const storedAuth = sessionStorage.getItem("bedtimeAuth");
+    if (storedAuth === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  // Scroll to story content when a story is loaded
+  useEffect(() => {
+    if (currentStory && storyContentRef.current) {
+      storyContentRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [currentStory]);
+
   return (
     <div className="app-container">
       <header className="header">
@@ -141,7 +172,27 @@ function App() {
         <p className="subtitle">Create magical bedtime stories for your child</p>
       </header>
 
-      <main className="main-content">
+      {!isAuthenticated ? (
+        <div className="login-container">
+          <div className="login-card">
+            <h2>Password Required</h2>
+            <p>Please enter the password to access bedtime stories.</p>
+            <form onSubmit={handleLogin} className="login-form">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="password-input"
+                required
+              />
+              {passwordError && <div className="password-error">{passwordError}</div>}
+              <button type="submit" className="login-btn">Enter</button>
+            </form>
+          </div>
+        </div>
+      ) : (
+        <main className="main-content" ref={storyContentRef}>
         <section className="story-generator">
           <form onSubmit={generateStory} className="story-form">
             <div className="form-group">
