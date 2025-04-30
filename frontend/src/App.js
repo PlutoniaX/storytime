@@ -346,10 +346,10 @@ function App() {
           )}
         </section>
       </main>
-        <footer className="footer">
-          <p>© 2025 Bedtime Story Generator - Made with love for sleepy children everywhere</p>
-        </footer>
-        </>
+      <footer className="footer">
+        <p>© 2025 Bedtime Story Generator - Made with love for sleepy children everywhere</p>
+      </footer>
+      </>
       )}
     </div>
   );
