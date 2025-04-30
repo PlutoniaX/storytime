@@ -65,13 +65,13 @@ async def generate_story(request: StoryRequest):
     try:
         # Determine story length based on duration
         if request.duration <= 5:
-            max_tokens = 500
+            max_tokens = 800
             complexity = "simple"
         elif request.duration <= 10:
-            max_tokens = 1000
+            max_tokens = 1500
             complexity = "moderate"
         else:
-            max_tokens = 1500
+            max_tokens = 2500
             complexity = "complex"
             
         # First detect the language of the prompt
