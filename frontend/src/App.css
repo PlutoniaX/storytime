@@ -547,12 +547,11 @@
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  transform: translateZ(15px);
-  transition: transform 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .story-card:hover h3 {
-  transform: translateZ(25px);
+  color: #6d28d9;
 }
 
 .story-prompt {
@@ -563,12 +562,11 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  transform: translateZ(10px);
-  transition: transform 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .story-card:hover .story-prompt {
-  transform: translateZ(20px);
+  color: #4b5563;
 }
 
 .story-card-image {
