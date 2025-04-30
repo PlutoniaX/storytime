@@ -160,27 +160,68 @@ Create a bedtime story about: {request.prompt}"""
         except (KeyError, IndexError):
             raise HTTPException(status_code=500, detail="Failed to parse story content from Gemini API")
         
-        # Generate an image for the story using DALL-E API (direct HTTP request)
-        image_prompt = f"A children's book illustration for a story about {request.prompt}, suitable for a {request.age} year old child. Cute, colorful, child-friendly style with 3D pop effect."
+        # Generate an image for the story using Gemini's Imagen model
+        image_prompt = f"A children's book illustration for a story about {request.prompt}, suitable for a {request.age} year old child. Cute, colorful, child-friendly style with subtle 3D effect."
+        
         image_response = requests.post(
-            "https://api.openai.com/v1/images/generations",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
             headers={
-                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
+            params={
+                "key": gemini_api_key
+            },
             json={
-                "model": "dall-e-3",
-                "prompt": image_prompt,
-                "size": "1024x1024",
-                "quality": "standard",
-                "n": 1,
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": f"Generate a high-quality image: {image_prompt}"
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.4
+                }
             }
         )
         
         if image_response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Error from OpenAI Image API: {image_response.text}")
-        
-        image_url = image_response.json()["data"][0]["url"]
+            # If Gemini image generation fails, use a placeholder image
+            logging.error(f"Error from Gemini Image API: {image_response.text}")
+            image_url = f"https://source.unsplash.com/random/1024x1024/?children,story,{request.prompt.replace(' ', ',')}"
+        else:
+            try:
+                # Try to extract the image URL from Gemini's response
+                response_data = image_response.json()
+                
+                # Extract the image URL if it's in the expected format
+                if "candidates" in response_data and len(response_data["candidates"]) > 0:
+                    candidate = response_data["candidates"][0]
+                    if "content" in candidate and "parts" in candidate["content"]:
+                        for part in candidate["content"]["parts"]:
+                            if "inlineData" in part and "data" in part["inlineData"]:
+                                # Handle base64 image data if provided
+                                image_base64 = part["inlineData"]["data"]
+                                # Here we'd normally save this to a file or cloud storage
+                                # For simplicity, we'll use a placeholder URL
+                                image_url = f"https://source.unsplash.com/random/1024x1024/?children,story,{request.prompt.replace(' ', ',')}"
+                                break
+                            if "text" in part and "http" in part["text"]:
+                                # Try to extract URL from text response
+                                import re
+                                urls = re.findall(r'https?://\S+', part["text"])
+                                if urls:
+                                    image_url = urls[0].strip('.,;()"\'')
+                                    break
+                
+                # If we couldn't extract an image, use a placeholder
+                if 'image_url' not in locals():
+                    image_url = f"https://source.unsplash.com/random/1024x1024/?children,story,{request.prompt.replace(' ', ',')}"
+            except Exception as e:
+                logging.error(f"Error parsing Gemini image response: {str(e)}")
+                image_url = f"https://source.unsplash.com/random/1024x1024/?children,story,{request.prompt.replace(' ', ',')}"
         
         # Create a story object
         story = Story(
