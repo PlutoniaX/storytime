@@ -136,10 +136,16 @@ async def generate_story(request: StoryRequest):
         raise HTTPException(status_code=500, detail=f"Error generating story: {str(e)}")
 
 @api_router.post("/text-to-speech")
-async def text_to_speech(story_id: str = Body(...)):
+async def text_to_speech(story_id: dict = Body(...)):
     try:
+        # Extract story_id from the request body
+        if not isinstance(story_id, dict) or "story_id" not in story_id:
+            raise HTTPException(status_code=422, detail="Request body must contain 'story_id' field")
+        
+        story_id_str = story_id.get("story_id")
+        
         # Get the story from the database
-        story_doc = await db.stories.find_one({"id": story_id})
+        story_doc = await db.stories.find_one({"id": story_id_str})
         if not story_doc:
             raise HTTPException(status_code=404, detail="Story not found")
         
@@ -169,9 +175,9 @@ async def text_to_speech(story_id: str = Body(...)):
                 yield chunk
         
         # Save audio URL to the database (would typically save to cloud storage in production)
-        story.audio_url = f"/api/audio/{story_id}"
+        story.audio_url = f"/api/audio/{story_id_str}"
         await db.stories.update_one(
-            {"id": story_id},
+            {"id": story_id_str},
             {"$set": {"audio_url": story.audio_url}}
         )
         
