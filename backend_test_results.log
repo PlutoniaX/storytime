@@ -1,0 +1,22 @@
+🧪 Starting Bedtime Story API Tests 🧪
+
+🔍 Testing Root Endpoint...
+✅ Passed - Status: 200
+
+🔍 Testing Generate Story...
+✅ Passed - Status: 200
+Generated story with ID: 0204c611-1fbc-4611-a109-3c560064a80c
+Story title: Title: "Drako The Dragon Learns To Share"
+Image URL: https://oaidalleapiprodscus.blob.core.windows.net/private/org-KTOmWvqYgEbMDQFDij2JKsc6/user-mj8V2WYEQdMLH1jGJowALY58/img-W1EZJvw4RdEbH0wbqfx7SdZ6.png?st=2025-04-30T00%3A33%3A48Z&se=2025-04-30T02%3A33%3A48Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=cc612491-d948-4d2e-9821-2683df3719f5&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-04-29T23%3A06%3A03Z&ske=2025-04-30T23%3A06%3A03Z&sks=b&skv=2024-08-04&sig=uio61Gv1VvrkZTTGEZHvPq/sdvwZ629ohJWyWG3iPDQ%3D
+
+🧪 Testing Age-Appropriate Content Generation 🧪
+
+🧒 Testing story generation for age: 3
+
+🔍 Testing Generate Story for Age 3...
+✅ Passed - Status: 200
+Generated age-appropriate story: Title: "Teddy's Big Adventure"
+
+🧒 Testing story generation for age: 5
+
+🔍 Testing Generate Story for Age 5...
