@@ -121,6 +121,11 @@ function App() {
   };
 
   const loadStory = (story) => {
+    // Stop audio if playing when switching stories
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
     setCurrentStory(story);
   };
 
