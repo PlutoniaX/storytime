@@ -617,11 +617,20 @@
 
 /* Footer */
 .footer {
-  background-color: #2d3748;
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
   color: white;
   text-align: center;
-  padding: 1.5rem;
-  font-size: 0.9rem;
+  padding: 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  margin-top: 2rem;
+  box-shadow: 
+    0 -10px 20px rgba(123, 77, 255, 0.2),
+    0 -6px 6px rgba(123, 77, 255, 0.1);
+  position: relative;
+  z-index: 10;
 }
 
 /* Responsive adjustments */
