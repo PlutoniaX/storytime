@@ -4,6 +4,7 @@ import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const CORRECT_PASSWORD = "bedtime123";
 
 function App() {
   const [prompt, setPrompt] = useState("");
@@ -16,7 +17,11 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const audioRef = useRef(null);
+  const storyContentRef = useRef(null);
 
   // Fetch previous stories on component mount
   useEffect(() => {
