@@ -23,8 +23,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# OpenAI API key
+# API keys
 openai_api_key = os.environ.get('OPENAI_API_KEY')
+gemini_api_key = os.environ.get('GEMINI_API_KEY')
 
 # Create the main app without a prefix
 app = FastAPI()
