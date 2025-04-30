@@ -14,15 +14,6 @@ import base64
 import requests
 from fastapi.responses import StreamingResponse
 import io
-import sys
-import subprocess
-
-# Install OpenAI if not already installed
-try:
-    import openai
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "openai"])
-    import openai
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -32,8 +23,8 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# OpenAI API setup
-openai.api_key = os.environ.get('OPENAI_API_KEY')
+# OpenAI API key
+openai_api_key = os.environ.get('OPENAI_API_KEY')
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -82,30 +73,50 @@ async def generate_story(request: StoryRequest):
             max_tokens = 1500
             complexity = "complex"
 
-        # Generate story content using OpenAI
-        story_response = openai.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": f"You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for young children. Make it engaging, descriptive, and with a positive message. Include a title at the beginning."},
-                {"role": "user", "content": f"Create a bedtime story about: {request.prompt}"}
-            ],
-            max_tokens=max_tokens,
-            temperature=0.7,
+        # Generate story content using OpenAI API (direct HTTP request)
+        story_response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4",
+                "messages": [
+                    {"role": "system", "content": f"You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for young children. Make it engaging, descriptive, and with a positive message. Include a title at the beginning."},
+                    {"role": "user", "content": f"Create a bedtime story about: {request.prompt}"}
+                ],
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+            }
         )
         
-        story_content = story_response.choices[0].message.content.strip()
+        if story_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Error from OpenAI API: {story_response.text}")
         
-        # Generate an image for the story using DALL-E
+        story_content = story_response.json()["choices"][0]["message"]["content"].strip()
+        
+        # Generate an image for the story using DALL-E API (direct HTTP request)
         image_prompt = f"A children's book illustration for a story about {request.prompt}. Cute, colorful, child-friendly style."
-        image_response = openai.images.generate(
-            model="dall-e-3",
-            prompt=image_prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
+        image_response = requests.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "dall-e-3",
+                "prompt": image_prompt,
+                "size": "1024x1024",
+                "quality": "standard",
+                "n": 1,
+            }
         )
         
-        image_url = image_response.data[0].url
+        if image_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Error from OpenAI Image API: {image_response.text}")
+        
+        image_url = image_response.json()["data"][0]["url"]
         
         # Create a story object
         story = Story(
@@ -134,16 +145,28 @@ async def text_to_speech(story_id: str = Body(...)):
         
         story = Story(**story_doc)
         
-        # Generate speech using OpenAI API
-        speech_response = openai.audio.speech.create(
-            model="tts-1",
-            voice="nova",
-            input=story.content
+        # Generate speech using OpenAI API (direct HTTP request)
+        speech_response = requests.post(
+            "https://api.openai.com/v1/audio/speech",
+            headers={
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "tts-1",
+                "voice": "nova",
+                "input": story.content
+            },
+            stream=True
         )
         
+        if speech_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Error from OpenAI TTS API: {speech_response.text}")
+        
         # Convert to streaming response
-        audio_stream = io.BytesIO(speech_response.content)
-        audio_stream.seek(0)
+        def iterfile():
+            for chunk in speech_response.iter_content(chunk_size=8192):
+                yield chunk
         
         # Save audio URL to the database (would typically save to cloud storage in production)
         story.audio_url = f"/api/audio/{story_id}"
@@ -152,7 +175,7 @@ async def text_to_speech(story_id: str = Body(...)):
             {"$set": {"audio_url": story.audio_url}}
         )
         
-        return StreamingResponse(audio_stream, media_type="audio/mpeg")
+        return StreamingResponse(iterfile(), media_type="audio/mpeg")
     
     except Exception as e:
         logging.error(f"Error generating speech: {str(e)}")
