@@ -122,30 +122,43 @@ async def generate_story(request: StoryRequest):
         else:
             age_guidance = "older children (10-12 years old). Use rich vocabulary and more complex sentence structures. Include more sophisticated themes while maintaining age-appropriate content."
 
-        # Generate story content using OpenAI API (direct HTTP request)
-        system_prompt = f"You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for {age_guidance} Make it engaging, descriptive, and with a positive message. Include a title at the beginning. The story should be written in {language}."
+        # Generate story content using Gemini API (direct HTTP request)
+        prompt = f"""You are a children's bedtime story creator. Create a {request.duration} minute {complexity} bedtime story appropriate for {age_guidance} Make it engaging, descriptive, and with a positive message. Include a title at the beginning. The story should be written in {language}.
+
+Create a bedtime story about: {request.prompt}"""
         
         story_response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
             headers={
-                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
+            params={
+                "key": gemini_api_key
+            },
             json={
-                "model": "gpt-4",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Create a bedtime story about: {request.prompt}"}
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": prompt
+                            }
+                        ]
+                    }
                 ],
-                "max_tokens": max_tokens,
-                "temperature": 0.7,
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": max_tokens
+                }
             }
         )
         
         if story_response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Error from OpenAI API: {story_response.text}")
+            raise HTTPException(status_code=500, detail=f"Error from Gemini API: {story_response.text}")
         
-        story_content = story_response.json()["choices"][0]["message"]["content"].strip()
+        try:
+            story_content = story_response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError):
+            raise HTTPException(status_code=500, detail="Failed to parse story content from Gemini API")
         
         # Generate an image for the story using DALL-E API (direct HTTP request)
         image_prompt = f"A children's book illustration for a story about {request.prompt}, suitable for a {request.age} year old child. Cute, colorful, child-friendly style with 3D pop effect."
